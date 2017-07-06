@@ -1,7 +1,7 @@
 // Adiciona todos lib padrão do C++
 // https://gist.github.com/eduarc/6022859
 #include <bits/stdc++.h>
-#include "../common/utils.h"
+#include "../client/common/utils.h"
 
 using namespace std;
 
