@@ -6,3 +6,8 @@ build
 client/clientTP3
 servent/serventTP3
 
+# common files inside package
+client/common/*
+servent/common/*
+
+
