@@ -40,7 +40,7 @@ int main(int argc, char *argv[])
 		exit(1);
 	}
 
-	int localport, socketFD, i;
+	unsigned int localport, socketFD, i;
 	struct sockaddr_in servAddr;
 	string aux, line;
 	keyValue_t key;
@@ -81,7 +81,7 @@ int main(int argc, char *argv[])
 	for(i = 0; i < dictionary.size(); i++)
 		std::cout << dictionary[i].name << " - " << dictionary[i].value << endl;
 
-	std::cout << "NEIGHBORHOOD:" << endl;
+	std::cout << endl << "NEIGHBORHOOD:" << endl;
 	for(i = 0; i < neighborhood.size(); i++)
 		std::cout << neighborhood[i].ip << " - " << neighborhood[i].port << endl;
 //--------------------------------------------------------------//
