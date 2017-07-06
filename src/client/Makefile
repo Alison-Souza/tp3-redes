@@ -192,6 +192,11 @@ clean:
 	@$(RM) -r build
 	@$(RM) -r bin
 
+# make run add by Yuri
+
+run:
+	@./$(BIN_NAME) 127.0.0.1:8000
+
 # Main rule, checks the executable and symlinks to the output
 all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"
