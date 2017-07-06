@@ -1,6 +1,21 @@
 // Adiciona todos lib padrão do C++
 // https://gist.github.com/eduarc/6022859
-#include <bits/stdc++.h>
+//#include <bits/stdc++.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <cstdint>
+#include <cerrno>
+
+#include <iostream>
+#include <string>
+#include <fstream>
+#include <vector>
+
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+#include <sys/time.h>
 #include "../client/common/utils.h"
 
 using namespace std;
@@ -9,20 +24,29 @@ typedef struct keyValue
 {
 	string name;
 	string value;
-} keyValue;
+} keyValue_t;
 
-int main(int argc, char const *argv[])
+typedef struct neighbor
+{
+	string ip;
+	int port;
+} neighbor_t;
+
+int main(int argc, char *argv[])
 {
 	if(argc < 3)
 	{
-		fprintf(stderr, "Usage is:\n./serventTP3 <localport> <key-values> <ip1:port1> ... <ipN:portN>\nSystem abort.\n");
-		exit(EXIT_FAILURE);
+		std::cerr << "Usage is:\n./serventTP3 <localport> <key-values> <ip1:port1> ... <ipN:portN>\nSystem abort.\n";
+		exit(1);
 	}
 
-	int localport;
+	int localport, socketFD, i;
+	struct sockaddr_in servAddr;
 	string aux, line;
-	keyValue key;
-	std::vector<keyValue> keyVector;
+	keyValue_t key;
+	std::vector<keyValue_t> dictionary;
+	neighbor_t ngbr;
+	std::vector<neighbor_t> neighborhood;
 
 	localport = atoi(argv[1]);
 	std::ifstream file(argv[2]);
@@ -37,10 +61,44 @@ int main(int argc, char const *argv[])
 		istringstream keyStream(line);
 		keyStream >> key.name >> key.value;
 	
-		//std::cout << key.name << " - " << key.value << endl;
+		// Insere o par chave-valor no dicionário.
+		dictionary.push_back(key);
+	}
 
-		// Insere chave no vetor.
-		keyVector.push_back(key);
+	i = argc;
+	while(i > 3)
+	{
+		i--;
+		ngbr.ip = strtok(argv[i], ":");
+		ngbr.port = atoi(strtok(NULL, " "));
+		
+		neighborhood.push_back(ngbr);
+	}
+//--------------------------------------------------------------//
+	//PRINT PRA VER SE TÔ LENDO AS BUDEGA DIREITO.
+
+	std::cout << "DICTIONARY:" << endl;
+	for(i = 0; i < dictionary.size(); i++)
+		std::cout << dictionary[i].name << " - " << dictionary[i].value << endl;
+
+	std::cout << "NEIGHBORHOOD:" << endl;
+	for(i = 0; i < neighborhood.size(); i++)
+		std::cout << neighborhood[i].ip << " - " << neighborhood[i].port << endl;
+//--------------------------------------------------------------//
+
+	if((socketFD = socket(AF_INET, SOCK_DGRAM, 0)) < 0)
+	{
+		std::cerr << "Error in trying to opening socket. " << strerror(errno) << endl;
+		exit(1);
+	}
+	servAddr.sin_family = AF_INET;
+	servAddr.sin_addr.s_addr = htonl(INADDR_ANY);
+	servAddr.sin_port = htons(localport);
+
+	if(bind(socketFD, (struct sockaddr *) &servAddr, sizeof(struct sockaddr)) < 0)
+	{
+		std::cerr << "Error on trying to bind: " << strerror(errno) << endl;
+		exit(1);
 	}
 
 	return 0;
