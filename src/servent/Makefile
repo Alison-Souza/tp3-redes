@@ -192,6 +192,9 @@ clean:
 	@$(RM) -r build
 	@$(RM) -r bin
 
+run:
+	@./$(BIN_NAME) 8000 key.txt 127.0.0.1:5000 192.168.0.1:9000
+
 # Main rule, checks the executable and symlinks to the output
 all: $(BIN_PATH)/$(BIN_NAME)
 	@echo "Making symlink: $(BIN_NAME) -> $<"

@@ -1,16 +1,6 @@
 // Adiciona todos lib padrão do C++
 // https://gist.github.com/eduarc/6022859
-//#include <bits/stdc++.h>
-#include <cstdio>
-#include <cstdlib>
-#include <cstring>
-#include <cstdint>
-#include <cerrno>
-
-#include <iostream>
-#include <string>
-#include <fstream>
-#include <vector>
+#include <bits/stdc++.h>
 
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -36,11 +26,12 @@ int main(int argc, char *argv[])
 {
 	if(argc < 3)
 	{
-		std::cerr << "Usage is:\n./serventTP3 <localport> <key-values> <ip1:port1> ... <ipN:portN>\nSystem abort.\n";
+		std::cerr << "Usage is:\n./serventTP3 <localport> <key-values> <ip1:port1> ... <ipN:portN>\nSystem abort." << endl;
 		exit(1);
 	}
 
-	unsigned int localport, socketFD, i;
+	unsigned int i;
+	int localport, socketFD;
 	struct sockaddr_in servAddr;
 	string aux, line;
 	keyValue_t key;
@@ -59,8 +50,12 @@ int main(int argc, char *argv[])
 
 		// Transforma a linha lida em fluxo de dados.
 		istringstream keyStream(line);
+		
 		keyStream >> key.name >> key.value;
-	
+		// Fazer assim elimina os espaços entre chave e valor.
+		getline(keyStream, aux);
+		key.value.append(aux);
+
 		// Insere o par chave-valor no dicionário.
 		dictionary.push_back(key);
 	}
@@ -76,7 +71,6 @@ int main(int argc, char *argv[])
 	}
 //--------------------------------------------------------------//
 	//PRINT PRA VER SE TÔ LENDO AS BUDEGA DIREITO.
-
 	std::cout << "DICTIONARY:" << endl;
 	for(i = 0; i < dictionary.size(); i++)
 		std::cout << dictionary[i].name << " - " << dictionary[i].value << endl;
