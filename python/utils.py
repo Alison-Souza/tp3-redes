@@ -1,0 +1,79 @@
+"""
+Este módulo providencia as bibliotecas para os módulos do cliente e servidor
+assim como algumas constantes.
+"""
+
+import socket
+import select
+# stdin
+import sys
+
+# bibliotecas para transformar dados RAW
+import struct
+import binascii
+import ctypes
+
+# sort list with attribute
+import operator
+
+# Print cosmético de estruturas de dados da linguagem, DEBUG purpose.
+import pprint
+
+import time
+
+# DEBUG
+# Se setado em True, print_bold e print_warning tornam-se operacionais
+DEBUG = True
+
+# Colorir letras. Testado apenas no Linux.
+HEADER = '\033[95m'
+OKBLUE = '\033[94m'
+OKGREEN = '\033[92m'
+WARNING = '\033[93m'
+FAIL = '\033[91m'
+ENDC = '\033[0m'
+BOLD = '\033[1m'
+UNDERLINE = '\033[4m'
+
+"""
+Abaixo contém funções para imprimir com cor no terminal
+Alguns tem como propósito de DEBUG
+"""
+def print_purple(msg, end=None):
+	if end is None:
+		print(HEADER + str(msg) + ENDC)
+	else:
+		print(HEADER + str(msg) + ENDC, end=end)
+
+def print_blue(msg, end=None):
+	if end is None:
+		print(OKBLUE + str(msg) + ENDC)
+	else:
+		print(OKBLUE + str(msg) + ENDC, end=end)
+
+def print_green(msg, end=None):
+	if end is None:
+		print(OKGREEN + str(msg) + ENDC)
+	else:
+		print(OKGREEN + str(msg) + ENDC, end=end)
+
+def print_bold(msg, end=None):
+	if DEBUG:
+		if end is None:
+			print(BOLD + str(msg) + ENDC)
+		else:
+			print(BOLD + str(msg) + ENDC, end=end)
+
+def print_warning(msg, end=None):
+	if DEBUG:
+		if end is None:
+			print(WARNING + str(msg) + ENDC)
+		else:
+			print(WARNING + str(msg) + ENDC, end=end)
+
+# print errors in RED
+def print_error(msg, end=None):
+	if end is None:
+		print(FAIL + str(msg) + ENDC)
+	else:
+		print(FAIL + str(msg) + ENDC, end=end)
