@@ -31,6 +31,9 @@ TTL_INITIAL_DEFAULT = 3
 # 40 da key + 160 valor associado
 BUFFER_SIZE = 202
 
+# TIMEOUT do client quando enviar uma QUERY e esperar por RESPONSE
+TIMEOUT_CLIENT = 4
+
 # DEBUG
 # Se setado em True, print_bold e print_warning tornam-se operacionais
 DEBUG = True
