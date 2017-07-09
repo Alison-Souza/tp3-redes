@@ -103,12 +103,17 @@ class Servent:
         pprint.pprint(self.keys)
         print(ENDC, end="")
 
+    # Retorna o valor da chave pedida, None se não achar
     def get_value_by_key(self, key):
+        print_warning('Search for key: ' + key)
         if key[-1] == '\0':
             key = key[:-1]
         if key in self.keys:
+            print_warning('Found value: ', end="")
+            print_bold(str(self.keys[key]))
             return self.keys[key]
         else:
+            print_warning('Not found')
             return None
 
     def add_query_to_remember(self, addr, seq_num, key):
@@ -149,7 +154,7 @@ class Servent:
 
     # Cria e retorna frame RESPONSE em binário
     def create_frame_RESPONSE(self, addr, key, value):
-        print_warning('Build frame RESPONSE')
+        print_warning('Build frame RESPONSE to ' + str(addr) )
 
         if key[-1] == '\0':
             key = key[:-1] + '\t'
@@ -176,8 +181,6 @@ class Servent:
         value = self.get_value_by_key(key)
 
         if value is not None:
-            print_warning('Found value')
-            print_warning(value)
             frame = self.create_frame_RESPONSE(addr, key, value)
             self.send_data(addr, frame)
 
@@ -208,12 +211,22 @@ class Servent:
         data_aux = data_aux[4:]
         # O texto da chave pela qual o cliente está buscando.
         # WAIT
-        key = data_aux
+        key = data_aux.decode('ascii')
 
-        if self.query_already_pass_here(addr, seq_num, key):
+        if self.query_already_pass_here((ip_addr, port), seq_num, key):
             return
 
+        value = self.get_value_by_key(key)
+
+        if value is not None:
+            frame = self.create_frame_RESPONSE((ip_addr, port), key, value)
+            self.send_data(addr, frame)
+
         data = data[:2] + struct.pack('! H', ttl-1) + data[4:]
+
+        if DEBUG:
+            time.sleep(1)
+
         self.send_to_neighborhoods(data)
 
 
@@ -229,7 +242,7 @@ class Servent:
 
     def send_to_neighborhoods(self, data):
         print_warning('Sending data to all neighborhoods')
-        print(data)
+        print_bold(data)
         for x in self.neighborhoods:
             self.send_data((x.host, x.port), data)
 
