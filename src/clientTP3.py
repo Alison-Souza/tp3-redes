@@ -39,7 +39,10 @@ class Client:
         data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size is 1024 bytes
         return data, addr
 
-    def wait_response(self, sock):
+    # Espera resposta das consultas, caso não receba nenhuma resposta do time out, ele mais uma vez
+    def wait_response(self, command, sock):
+        # Variável pra tentar query pela segunda vez se não tiver nenhum sucesso
+        try_again = False
         while True:
             try:
                 read_sockets, write_sockets, error_sockets = select.select([sock], [], [], TIMEOUT_CLIENT)
@@ -50,19 +53,24 @@ class Client:
                 print_warning('Saiu do select')
 
             if read_sockets:
+                try_again = True
                 data, addr = self.receive_data(sock)
                 print_warning('Receive from ', end="")
                 print_warning(addr)
                 self.handle_RESPONSE(data)
             else:
                 print_blue('Timeout')
-                break
+                if try_again:
+                    break
+                else:
+                    self.send_query(command, sock)
+                    try_again = True
 
     def get_command(self, command):
         if command == '/help':
             # TODO: completar com português correto
-            print_blue('<key>')
-            print_blue('/quit')
+            print_blue('Type the key name to query, ex: "nbp"')
+            print_blue('"/quit" to exit')
             print()
         elif command == '/quit':
             sys.exit()
@@ -70,7 +78,7 @@ class Client:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
             sock.bind(('', 0))
             self.send_query(command, sock)
-            self.wait_response(sock)
+            self.wait_response(command, sock)
             sock.close()
 
     def start(self):

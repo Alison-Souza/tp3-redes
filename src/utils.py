@@ -36,7 +36,7 @@ TIMEOUT_CLIENT = 4
 
 # DEBUG
 # Se setado em True, print_bold e print_warning tornam-se operacionais
-DEBUG = False
+DEBUG = True
 
 # Colorir letras. Testado apenas no Linux.
 CYAN = '\033[95m'

@@ -126,6 +126,7 @@ class Servent:
         if v in self.has_here:
             return True
         else:
+            self.has_here.add((*addr, seq_num, key))
             return False
 
     # Cria e retorna frame QUERY em binário
@@ -253,6 +254,8 @@ class Servent:
         if DEBUG:
             self.list_neighborhoods()
             self.list_keys()
+
+        print_green('Servent with port ' + str(self.port) + ' ready!')
 
         while True:
             socket_list = [self.sock]
