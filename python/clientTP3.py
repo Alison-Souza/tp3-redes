@@ -31,15 +31,9 @@ class Client:
         if data[0] != 0 or data[1] != RESPONSE:
             print_error('Error dude')
         data = data[2:]
-        split_pos = 0
-        for i in range(len(data)):
-            if data[i] == 0:
-                split_pos = i + 1
-                break
-        struct_aux = struct.Struct('! ' + str(split_pos) + 's ' + str(len(data) - split_pos) + 's')
+        struct_aux = struct.Struct('! ' + str(len(data)) + 's')
         data = struct_aux.unpack(data)
-        print(data[0].decode('ascii'))
-        print(data[1].decode('ascii'))
+        print_purple(data[0].decode('ascii'))
 
     def receive_data(self, sock):
         data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size is 1024 bytes
@@ -54,7 +48,6 @@ class Client:
                 raise
             finally:
                 print_warning('Saiu do select')
-            print(read_sockets)
 
             if read_sockets:
                 data, addr = self.receive_data(sock)
@@ -62,11 +55,11 @@ class Client:
                 print_warning(addr)
                 self.handle_RESPONSE(data)
             else:
-                print_warning('Saiu do wait_response')
+                print_blue('Timeout')
                 break
 
     def get_command(self, command):
-        if command == 'help':
+        if command == '/help':
             # TODO: completar com português correto
             print_blue('<key>')
             print_blue('/quit')
@@ -75,6 +68,7 @@ class Client:
             sys.exit()
         else: # QUERY
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+            sock.bind(('', 0))
             self.send_query(command, sock)
             self.wait_response(sock)
             sock.close()
@@ -83,15 +77,16 @@ class Client:
         time.sleep(1)
         # Clear terminal
         print('\033c', end="")
-        print_blue('Type "help" for more info!')
+        print_blue('Type "/help" for more info!')
 
         while True:
+            print('>', end=" ")
             command = str(input())
             self.get_command(command)
 
 def main(args):
     if len(args) < 2:
-        print_blue('Client')
+        print_blue('Client to query things')
         print_blue('  USAGE:', end=" ")
         usage = args[0] + ' <IP:port>'
         print_blue(usage)

@@ -220,7 +220,7 @@ class Servent:
 
         if value is not None:
             frame = self.create_frame_RESPONSE((ip_addr, port), key, value)
-            self.send_data(addr, frame)
+            self.send_data((ip_addr, port), frame)
 
         data = data[:2] + struct.pack('! H', ttl-1) + data[4:]
 
