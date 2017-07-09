@@ -1,8 +1,44 @@
-# Anotações
+# Código fonte = src (Duh)
 
-- A comunicação entre os programas cliente e o seu ponto de contato e entre os pares se dá através de mensagens UDP.
-- O cliente envia uma mensagem UDP para o seu ponto de contato contendo apenas um campo de tipo de mensagem (uint16_t) com valor 1 (CLIREQ) e o texto da chave.
-- Se ele esperar por 4 segundos e não receber nenhuma resposta, ele deve retransmitir a consulta uma vez apenas e voltar a esperar.
-- Se ele receber uma resposta, ele não sabe quantas outras respostas ele pode receber, pois vários nós podem conter dados para uma mesma chave.
-- Sendo assim, seu cliente deve entrar em um loop lendo as mensagens de resposta que porventura receba, até que ele fique esperando por 4 segundos sem receber novas respostas.
-- À medida que as respostas cheguem ele pode exibi-las para o usuário, indicando que par respondeu (definido pelo par IP:porto) e ao final do tempo de espera indicar que não há mais respostas.
+```
+    ,  ;\/ \' `'     `   '  /|
+    |\/                      |
+    :                        |
+    :                        |
+     |                       |
+     |                       |
+     :               -.     _|
+      :                \     `.
+      |         ________:______\
+      :       ,'o       / o    ;
+      :       \       ,'-----./
+       \_      `--.--'        )
+      ,` `.              ,---'|
+      : `                     |
+       `,-'                   |
+       /      ,---.          ,'
+    ,-'            `-,------'
+   '   `.        ,--' 
+         `-.____/
+ -hrr-           \
+```
+
+## Arquivos
+
+### servant
+
+`python3 serventTP3 <localport> <key-values> <ip1:port1> ... <ipN:portN>`
+
+O programa *servent* deve então ler o arquivo key-values e criar um dicionário onde os pares chave-valor serão armazenados e abrir um socket UDP no porto local indicado e ficar esperando por mensagens.
+
+A lista de pares `IP:porto` recebida na linha de comando identifica os pares que serão vizinhos daquele nó. Cada nó pode trocar mensagem com seus vizinhos, e a rede peer-to-peer é formada pelas vizinhanças formadas entre os nós da rede, criando uma rede sobreposta (overlay).
+
+### client
+
+O programa cliente deve ser disparado com o endereço e porto de um *servent* da rede sobreposta que será seu ponto de contato com o sistema distribuído:
+
+`python3 clientTP3 <IP:port>`
+
+O client deve então esperar que o usuário digite uma chave, montar uma mensagem de consulta e enviá-la para o ponto de contato.
+
+O protocolo de comunicação entre os pares já está pré-definido e será um protocolo de alagamento confiável, como o utilizado pelo OSPF, que é a opção mais simples para esse tipo de problema.
