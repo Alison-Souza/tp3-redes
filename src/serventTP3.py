@@ -1,21 +1,8 @@
 #!/usr/bin/python3
 from utils import *
 
-# NOTE: Só guardar isso aqui pra usar posteriormente
-# Para fins de dimensionamento, considere que uma chave tem no máximo 40 caracteres e o valor associado tem no máximo 160 caracteres.
-# Vamos considerar que esses valores não incluem o caractere nulo ao final, que tem que estar lá sempre. Então serão 41 e 161 bytes no limite em cada caso.
-
-
-# Os servents trocam apenas um tipo de mensagem entre si, que tem os seguintes campos:
-# Um campo de tipo de mensagem (uint16_t) com valor 2 (QUERY),
-# Um campo de TTL (uint16_t),
-# O endereço IP (struct in_addr) e o número do porto (uint16_t) do programa cliente que fez a consulta,
-# Um campo de número de sequência (uint32_t) e
-# O texto da chave pela qual o cliente está buscando.
-
-
 class Connection:
-    """docstring for Connection."""
+    """Esta classe serve para armazenar IP e porta do vizinho do Servent."""
     def __init__(self, *args):
         if isinstance(args, tuple):
             if len(args) == 2:
@@ -36,7 +23,13 @@ class Connection:
         return str(self.host) + ', ' + str(self.port)
 
 class Servent:
-    """docstring for Servent."""
+    """
+    A classe Servent. Serve para armazenar as chaves e valores para consulta.
+    Se contiver a chave consultada, a resposta com o valor correspondente é
+    enviada ao cliente.
+    De qualquer modo, se contiver ou não a chave, o Servent repassa a todos os
+    seus vizinhos (lista de classes Connection) a QUERY correspondente.
+    """
     def __init__(self, port, namefile_key, *args):
         self.port = int(port) if not isinstance(port, int) else port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
@@ -89,7 +82,9 @@ class Servent:
         print_green('Servent died')
         self.sock.close()
 
-    # Lista os vizinhos
+    """
+    Lista os vizinhos
+    """
     def list_neighborhoods(self):
         print(BLUE, end="")
         print('IP - port')
@@ -97,13 +92,17 @@ class Servent:
             print(conn)
         print(ENDC, end="")
 
-    # Lista as chaves
+    """
+    Lista as chaves
+    """
     def list_keys(self):
         print(BLUE, end="")
         pprint.pprint(self.keys)
         print(ENDC, end="")
 
+    """
     # Retorna o valor da chave pedida, None se não achar
+    """
     def get_value_by_key(self, key):
         print_warning('Search for key: ' + key)
         if key[-1] == '\0':
@@ -116,20 +115,28 @@ class Servent:
             print_warning('Not found')
             return None
 
+    """
+    Adiciona uma Query para futuramente verificar se é uma Query repettida
+    """
     def add_query_to_remember(self, addr, seq_num, key):
         v = (*addr, seq_num, key)
         self.has_here.add(v)
         print_bold(v)
 
+    """
+    Veririca se a query já foi requisitada, se nã ela adiciona no conjunto
+    """
     def query_already_pass_here(self, addr, seq_num, key):
         v = (*addr, seq_num, key)
         if v in self.has_here:
             return True
         else:
-            self.has_here.add((*addr, seq_num, key))
+            self.add_query_to_remember(addr, seq_num, key)
             return False
 
-    # Cria e retorna frame QUERY em binário
+    """
+    Cria e retorna frame QUERY em binário
+    """
     def create_frame_QUERY(self, addr, key):
         print_warning('Build frame Query')
 
@@ -153,7 +160,9 @@ class Servent:
 
         return b
 
-    # Cria e retorna frame RESPONSE em binário
+    """
+    Cria e retorna frame RESPONSE em binário
+    """
     def create_frame_RESPONSE(self, addr, key, value):
         print_warning('Build frame RESPONSE to ' + str(addr) )
 
@@ -169,7 +178,10 @@ class Servent:
 
         return b
 
-    # Pega a requisição, monta o quadro e reenvia aos seus vizinhos
+    """
+    Pega a requisição, monta o quadro e reenvia aos seus vizinhos
+    Se encontrar a chave, envia um RESPOSE ao client
+    """
     def handle_CLIREQ(self, addr, data):
         print_warning('handling CLIREQ')
 
@@ -188,7 +200,9 @@ class Servent:
         frame = self.create_frame_QUERY(addr, key)
         self.send_to_neighborhoods(frame)
 
-
+    """
+    Se encarrega de tratar o dado recebido da QUERY
+    """
     def handle_QUERY(self, addr, data):
         print_warning('handling QUERY')
 
@@ -211,7 +225,6 @@ class Servent:
         seq_num = struct.unpack('! I', data_aux[:4])[0]
         data_aux = data_aux[4:]
         # O texto da chave pela qual o cliente está buscando.
-        # WAIT
         key = data_aux.decode('ascii')
 
         if self.query_already_pass_here((ip_addr, port), seq_num, key):
@@ -225,12 +238,17 @@ class Servent:
 
         data = data[:2] + struct.pack('! H', ttl-1) + data[4:]
 
+        # Adiciona um tempo só para dar tempo de ver o que está acontecendo
         if DEBUG:
             time.sleep(1)
 
         self.send_to_neighborhoods(data)
 
-
+    """
+    Apenas recebe dados no socket
+    O BUFFER_SIZE foi definido como 40 + 160 + 1 + 1
+    Tamanho composto pelo key, value, \t, \0
+    """
     def receive_data(self):
         data, addr = self.sock.recvfrom(BUFFER_SIZE)
         print_warning(addr)
@@ -238,15 +256,25 @@ class Servent:
         print_bold(len(data))
         return data, addr
 
+    """
+    Envia frame em binário pelo socket
+    """
     def send_data(self, addr, data):
         self.sock.sendto(data, addr)
 
+    """
+    Envia frame em binário para todos os vizinhos.
+    Tem como objetivo fazer um broadcast.
+    """
     def send_to_neighborhoods(self, data):
         print_warning('Sending data to all neighborhoods')
         print_bold(data)
         for x in self.neighborhoods:
             self.send_data((x.host, x.port), data)
 
+    """
+    Módulo principal, praticamente o "Main" da classe.
+    """
     def start(self):
         self.sock.bind(("0.0.0.0", self.port))
 

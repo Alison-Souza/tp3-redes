@@ -39,7 +39,9 @@ class Client:
         data, addr = sock.recvfrom(BUFFER_SIZE) # buffer size is 1024 bytes
         return data, addr
 
-    # Espera resposta das consultas, caso não receba nenhuma resposta do time out, ele mais uma vez
+    """
+    Espera resposta das consultas, caso não receba nenhuma resposta do time out, ele mais uma vez
+    """
     def wait_response(self, command, sock):
         # Variável pra tentar query pela segunda vez se não tiver nenhum sucesso
         try_again = False
@@ -66,6 +68,9 @@ class Client:
                     self.send_query(command, sock)
                     try_again = True
 
+    """
+    Pega a query ou encerramento no teclado
+    """
     def get_command(self, command):
         if command == '/help':
             # TODO: completar com português correto
@@ -81,6 +86,9 @@ class Client:
             self.wait_response(command, sock)
             sock.close()
 
+    """
+    Método principal, análogo ao "main" da classe
+    """
     def start(self):
         time.sleep(1)
         # Clear terminal
