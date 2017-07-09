@@ -40,6 +40,7 @@ class Servent:
     def __init__(self, port, namefile_key, *args):
         self.port = int(port) if not isinstance(port, int) else port
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
+        self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
 
         # Número de sequência
         self.seq_num = 0
@@ -102,6 +103,14 @@ class Servent:
         pprint.pprint(self.keys)
         print(ENDC, end="")
 
+    def get_value_by_key(self, key):
+        if key[-1] == '\0':
+            key = key[:-1]
+        if key in self.keys:
+            return self.keys[key]
+        else:
+            return None
+
     def add_query_to_remember(self, addr, seq_num, key):
         v = (*addr, seq_num, key)
         self.has_here.add(v)
@@ -138,6 +147,22 @@ class Servent:
 
         return b
 
+    # Cria e retorna frame RESPONSE em binário
+    def create_frame_RESPONSE(self, addr, key, value):
+        print_warning('Build frame RESPONSE')
+
+        if key[-1] == '\0':
+            key = key[:-1] + '\t'
+        else:
+            key += '\t'
+
+        b = struct.pack('! H', RESPONSE)
+        b += struct.pack('! ' + str(len(key)) + 's ' + str(len(value)) + 's', bytes(key, 'ascii'), bytes(value, 'ascii'))
+
+        print_bold(b)
+
+        return b
+
     # Pega a requisição, monta o quadro e reenvia aos seus vizinhos
     def handle_CLIREQ(self, addr, data):
         print_warning('handling CLIREQ')
@@ -145,39 +170,50 @@ class Servent:
         data = data[2:]
         struct_aux = struct.Struct('! ' + str(len(data)) + 's')
         data = struct_aux.unpack(data)
-        print_bold(data[0].decode('ascii'))
-        frame = self.create_frame_QUERY(addr, data[0].decode('ascii'))
-        # TODO: Faça a consulta na sua KEY
+        key = data[0].decode('ascii')
+        print_bold(key)
+
+        value = self.get_value_by_key(key)
+
+        if value is not None:
+            print_warning('Found value')
+            print_warning(value)
+            frame = self.create_frame_RESPONSE(addr, key, value)
+            self.send_data(addr, frame)
+
+        frame = self.create_frame_QUERY(addr, key)
         self.send_to_neighborhoods(frame)
 
 
     def handle_QUERY(self, addr, data):
-        print_warning('handling CLIREQ')
+        print_warning('handling QUERY')
 
         data_aux = data
         # Um campo de tipo de mensagem (uint16_t) com valor 2 (QUERY),
         data_aux = data_aux[2:]
         # Um campo de TTL (uint16_t),
-        ttl = struct.unpack('! H', data_aux[:2])
+        ttl = struct.unpack('! H', data_aux[:2])[0]
+
         if ttl == 0:
             return
+
         data_aux = data_aux[2:]
         # O endereço IP (struct in_addr) e o número do porto (uint16_t) do programa cliente que fez a consulta,
         ip_addr = socket.inet_ntoa(data_aux[:4])
         data_aux = data_aux[4:]
-        port = struct.unpack('! H', data_aux[:2])
+        port = struct.unpack('! H', data_aux[:2])[0]
         data_aux = data_aux[2:]
         # Um campo de número de sequência (uint32_t) e
-        seq_num = struct.unpack('! I', data_aux[:4])
+        seq_num = struct.unpack('! I', data_aux[:4])[0]
         data_aux = data_aux[4:]
         # O texto da chave pela qual o cliente está buscando.
         # WAIT
         key = data_aux
 
-        if query_already_pass_here(addr, seq_num, key):
+        if self.query_already_pass_here(addr, seq_num, key):
             return
 
-        data[2:4] = struct.pack('! H', ttl-1)
+        data = data[:2] + struct.pack('! H', ttl-1) + data[4:]
         self.send_to_neighborhoods(data)
 
 

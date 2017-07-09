@@ -29,7 +29,7 @@ class Client:
 
 
     def handle_RESPONSE(self, data):
-        if data[0] != 0 or data[1 != RESPONSE]:
+        if data[0] != 0 or data[1] != RESPONSE:
             print_error('Error dude')
         data = data[2:]
         split_pos = 0
@@ -80,7 +80,7 @@ class Client:
                 if sock == self.sock:
                     print_warning('Receive data')
                     data = self.receive_data()
-                    if data[0] != 0 or data[1 != RESPONSE]:
+                    if data[0] != 0 or data[1] != RESPONSE:
                         print_error('Error dude')
                     self.handle_RESPONSE(data)
                 elif sock == sys.stdin:
