@@ -14,11 +14,20 @@ class Client:
         self.sock.close()
 
     def send_data(self):
-        # sock.sendto(MESSAGE, (UDP_IP, UDP_PORT))
+        struct_aux = struct.Struct('! H H H H')
+        b = ctypes.create_string_buffer(struct_aux.size)
+        struct_aux.pack_into(b, 0, *(1, 2, 3, 4))
+        print_bold(b.raw)
+        self.sock.sendto(b, (self.host, self.port))
         pass
 
     def receive_data(self):
-        pass
+        # NOTE: Tornar dinâmico o buffer recebido ou procurar na documentação
+        #       se existe um limite máximo
+        data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
+        print_warning(addr)
+        print_bold(data)
+        return data
 
     def get_command(self):
         command = sys.stdin.readline()
@@ -29,7 +38,7 @@ class Client:
             print()
         elif command[:-1] == 'query':
             # TODO: Query com o server, não esquecer o timeout
-            pass
+            self.send_data()
         elif command[:-1] == 'quit':
             sys.exit()
         else:
@@ -37,7 +46,7 @@ class Client:
 
     def start(self):
         # NOTE: Tem que criar um port de escuta pra testar no localhost
-        self.sock.bind((self.host, self.port))
+        # self.sock.bind((self.host, self.port))
 
         # Clear terminal
         print('\033c', end="")
@@ -57,6 +66,7 @@ class Client:
             for sock in read_sockets:
                 if sock == self.sock:
                     print_warning('Receive data')
+                    self.receive_data()
                     # TODO: Receive data
                 elif sock == sys.stdin:
                     self.get_command()

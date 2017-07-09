@@ -21,14 +21,18 @@ import pprint
 
 import time
 
+# Protocol const (uint16_t)
+CLIREQ = 1
+QUERY = 2
+
 # DEBUG
 # Se setado em True, print_bold e print_warning tornam-se operacionais
 DEBUG = True
 
 # Colorir letras. Testado apenas no Linux.
-HEADER = '\033[95m'
-OKBLUE = '\033[94m'
-OKGREEN = '\033[92m'
+CYAN = '\033[95m'
+BLUE = '\033[94m'
+GREEN = '\033[92m'
 WARNING = '\033[93m'
 FAIL = '\033[91m'
 ENDC = '\033[0m'
@@ -41,21 +45,21 @@ Alguns tem como propósito de DEBUG
 """
 def print_purple(msg, end=None):
 	if end is None:
-		print(HEADER + str(msg) + ENDC)
+		print(CYAN + str(msg) + ENDC)
 	else:
-		print(HEADER + str(msg) + ENDC, end=end)
+		print(CYAN + str(msg) + ENDC, end=end)
 
 def print_blue(msg, end=None):
 	if end is None:
-		print(OKBLUE + str(msg) + ENDC)
+		print(BLUE + str(msg) + ENDC)
 	else:
-		print(OKBLUE + str(msg) + ENDC, end=end)
+		print(BLUE + str(msg) + ENDC, end=end)
 
 def print_green(msg, end=None):
 	if end is None:
-		print(OKGREEN + str(msg) + ENDC)
+		print(GREEN + str(msg) + ENDC)
 	else:
-		print(OKGREEN + str(msg) + ENDC, end=end)
+		print(GREEN + str(msg) + ENDC, end=end)
 
 def print_bold(msg, end=None):
 	if DEBUG:
