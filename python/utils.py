@@ -24,6 +24,12 @@ import time
 # Protocol const (uint16_t)
 CLIREQ = 1
 QUERY = 2
+RESPONSE = 3
+
+TTL_INITIAL_DEFAULT = 3
+
+# 40 da key + 160 valor associado
+BUFFER_SIZE = 202
 
 # DEBUG
 # Se setado em True, print_bold e print_warning tornam-se operacionais

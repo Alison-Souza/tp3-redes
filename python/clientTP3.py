@@ -5,49 +5,62 @@ class Client:
     """docstring for Client."""
     def __init__(self, host, port):
         print_warning('Client instanced')
-        self.host = host
+        self.server = host
         self.port = int(port) if not isinstance(port, int) else port
+        # Isso tá errado, vai abrir só quando vai consultar
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM) # UDP
 
     def __del__(self):
         print_blue('Client died')
         self.sock.close()
 
-    def send_data(self):
-        struct_aux = struct.Struct('! H H H H')
-        b = ctypes.create_string_buffer(struct_aux.size)
-        struct_aux.pack_into(b, 0, *(1, 2, 3, 4))
-        print_bold(b.raw)
-        self.sock.sendto(b, (self.host, self.port))
-        pass
+    # Envia uma QUERY ao servent
+    def send_query(self, key):
+        if len(key) > 0:
+            struct_aux = struct.Struct('! H ' + str(len(key) + 1) + 's')
+            data = (CLIREQ, bytes(key + '\0', 'ascii'))
+            b = ctypes.create_string_buffer(struct_aux.size)
+            struct_aux.pack_into(b, 0, *data)
+            # Insanity check
+            print_bold(b.raw)
+            self.sock.sendto(b, (self.server, self.port))
+        else:
+            print_error('send_query: len == 0')
+
+
+    def handle_RESPONSE(self, data):
+        if data[0] != 0 or data[1 != RESPONSE]:
+            print_error('Error dude')
+        data = data[2:]
+        split_pos = 0
+        for i in range(len(data)):
+            if data[i] == 0:
+                split_pos = i + 1
+                break
+        struct_aux = struct.Struct('! ' + str(split_pos) + 's ' + str(len(data) - split_pos) + 's')
+        data = struct_aux.unpack(data)
+        print(data[0].decode('ascii'))
+        print(data[1].decode('ascii'))
 
     def receive_data(self):
         # NOTE: Tornar dinâmico o buffer recebido ou procurar na documentação
         #       se existe um limite máximo
-        data, addr = self.sock.recvfrom(1024) # buffer size is 1024 bytes
-        print_warning(addr)
-        print_bold(data)
+        data, addr = self.sock.recvfrom(BUFFER_SIZE) # buffer size is 1024 bytes
         return data
 
     def get_command(self):
         command = sys.stdin.readline()
         if command[:-1] == 'help':
             # TODO: completar com português correto
-            print_blue('query: Faz consulta')
-            print_blue('quit: Fecha o cliente')
+            print_blue('<key>')
+            print_blue('/quit')
             print()
-        elif command[:-1] == 'query':
-            # TODO: Query com o server, não esquecer o timeout
-            self.send_data()
-        elif command[:-1] == 'quit':
+        elif command[:-1] == '/quit':
             sys.exit()
-        else:
-            print_error('Unknow command ' + str(command))
+        else: # QUERY
+            self.send_query(command[:-1])
 
     def start(self):
-        # NOTE: Tem que criar um port de escuta pra testar no localhost
-        # self.sock.bind((self.host, self.port))
-
         # Clear terminal
         print('\033c', end="")
         print_blue('Type "help" for more info!')
@@ -66,8 +79,10 @@ class Client:
             for sock in read_sockets:
                 if sock == self.sock:
                     print_warning('Receive data')
-                    self.receive_data()
-                    # TODO: Receive data
+                    data = self.receive_data()
+                    if data[0] != 0 or data[1 != RESPONSE]:
+                        print_error('Error dude')
+                    self.handle_RESPONSE(data)
                 elif sock == sys.stdin:
                     self.get_command()
                 else:
