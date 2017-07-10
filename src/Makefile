@@ -22,6 +22,6 @@ test4:
 	@python3 serventTP3.py 5001 key2.txt 127.0.0.1:5000 127.0.0.1:5002 &
 	@python3 serventTP3.py 5002 key.txt 127.0.0.1:5000 127.0.0.1:5001
 
-# Mata os processos estão vivos, ocupando as portas.
+# Mata os processos que estão vivos, pois ainda estão ocupando as portas.
 kill:
 	./kill.sh
